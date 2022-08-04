@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  influxdb:
+    # Not the lastest because chronograf's InfluxDB Admin tab and Hosts tab wouldn't work from 2.X.X version.
+    # This issue is described in InfluxDB repo.
+    image: "influxdb:1.8"
+    container_name: influxdb
+    restart: always
+    ports:
+    # 8086 for internal network and 8087 for external connection.
+      - "8087:8086"
+    volumes:
+      - ./influxdb/data:/var/lib/influxdb
+      - ./influxdb/config/:/etc/influxdb/
+    environment:
+      - AUTH_ENABLED=false
+      - INFLUXDB_HTTP_AUTH_ENABLED=false
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin
+      - INFLUXDB_DB=db0
+    networks:
+      - jmeter_stack
+
+  chronograf:
+    image: chronograf:latest
+    container_name: chronograf
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./chronograf/data/:/var/lib/chronograf/
+    # Chronograf container will start after InfluxDB
+    depends_on:
+      - influxdb
+    networks:
+      - jmeter_stack
+
+networks:
+  jmeter_stack:
+    driver: bridge
